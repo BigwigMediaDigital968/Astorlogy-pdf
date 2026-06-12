@@ -440,10 +440,10 @@ import {
 } from "lucide-react";
 
 interface RetinaScannerProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
-export function RetinaScanner({ onComplete }: RetinaScannerProps) {
+export default function App({ onComplete }: RetinaScannerProps) {
   const [showModal, setShowModal] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -501,28 +501,28 @@ export function RetinaScanner({ onComplete }: RetinaScannerProps) {
   const currentMessage =
     messages[Math.min(Math.floor(progress / 20), messages.length - 1)];
 
-  // Scanning simulation triggers when user closes modal and starts
+  // Scanning simulation triggers ONLY when user starts the scan from the modal
   useEffect(() => {
     if (!hasStarted) return;
 
-    const duration = Math.floor(Math.random() * 7000) + 10000;
-
-    console.log(duration);
-
+    const duration = Math.floor(Math.random() * 5000) + 5000; // 5 to 10 seconds scan duration
     const intervalTime = duration / 100;
 
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-
           stopCamera();
-
           setVerified(true);
 
+          // Delay to show the "Success" confirmation before invoking parent redirect handler
           setTimeout(() => {
             setRedirecting(true);
-            window.location.href = "/payment";
+            if (onComplete) {
+              onComplete();
+            } else {
+              window.location.href = "/payment";
+            }
           }, 3000);
 
           return 100;
@@ -532,11 +532,10 @@ export function RetinaScanner({ onComplete }: RetinaScannerProps) {
     }, intervalTime);
 
     return () => clearInterval(interval);
-  }, [hasStarted]);
+  }, [hasStarted, onComplete]);
 
   const handleStartScan = async () => {
     await requestCameraAccess();
-
     setShowModal(false);
     setHasStarted(true);
   };
@@ -548,28 +547,6 @@ export function RetinaScanner({ onComplete }: RetinaScannerProps) {
     setShowModal(true);
     setHasStarted(false);
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + 1;
-
-        if (next >= 100) {
-          clearInterval(interval);
-
-          setTimeout(() => {
-            onComplete();
-          }, 2000);
-
-          return 100;
-        }
-
-        return next;
-      });
-    }, 80);
-
-    return () => clearInterval(interval);
-  }, [onComplete]);
 
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#040208] text-white font-sans overflow-hidden px-4 py-8 selection:bg-violet-500/35">
@@ -701,10 +678,6 @@ export function RetinaScanner({ onComplete }: RetinaScannerProps) {
                 <div className="absolute inset-0 border border-white/[0.03] rounded-full pointer-events-none z-20" />
                 <div className="absolute left-1/2 top-0 bottom-0 w-[0.5px] bg-cyan-500/10 pointer-events-none z-20" />
                 <div className="absolute top-1/2 left-0 right-0 h-[0.5px] bg-cyan-500/10 pointer-events-none z-20" />
-                <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-cyan-500/10 rounded-full border-dashed pointer-events-none z-20 animate-spin"
-                  style={{ animationDuration: "15s" }}
-                />
 
                 {/* Camera / Eye Video Stream Layer - Always mounted to avoid ref re-binding race condition */}
                 <video
@@ -970,13 +943,4 @@ export function RetinaScanner({ onComplete }: RetinaScannerProps) {
       </AnimatePresence>
     </div>
   );
-}
-
-// standalone wrapper component setup to serve the environment renderer
-export default function App() {
-  const handleComplete = () => {
-    console.log("Scan process verified successfully.");
-  };
-
-  return <RetinaScanner onComplete={handleComplete} />;
 }

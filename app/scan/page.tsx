@@ -16,9 +16,9 @@ export default function ScanPage() {
     }
   }, [router]);
 
+  // This should only trigger when the scanner actually finishes its 100% calibration
   const handleScanComplete = () => {
     localStorage.setItem("scanCompleted", "true");
-
     router.push("/payment");
   };
 
@@ -27,7 +27,8 @@ export default function ScanPage() {
       <GalaxyBackground />
 
       <div className="relative z-20">
-        <RetinaScanner />
+        {/* Pass the complete handler to the component so it redirects only when finished */}
+        <RetinaScanner onComplete={handleScanComplete} />
       </div>
     </main>
   );
