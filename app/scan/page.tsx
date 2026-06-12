@@ -27,7 +27,7 @@ export default function ScanPage() {
       <GalaxyBackground />
 
       <div className="relative z-20">
-        <RetinaScanner onComplete={handleScanComplete} />
+        <RetinaScanner />
       </div>
     </main>
   );
